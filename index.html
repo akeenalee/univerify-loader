@@ -226,16 +226,18 @@
 
 <script>
   // ── CONFIG ────────────────────────────────────────────────────────────────
-  const HEALTH_URL  = 'https://doc-verify-x9uq.onrender.com/health';
-  const REDIRECT_TO = 'https://doc-verify-x9uq.onrender.com' + window.location.pathname + window.location.search;
-  const POLL_MS     = 2000;   // check every 2 seconds
-  const MAX_WAIT    = 60000;  // give up after 60 seconds
+  const HEALTH_URL    = 'https://doc-verify-x9uq.onrender.com/health';
+  const REDIRECT_TO   = 'https://doc-verify-x9uq.onrender.com' + window.location.pathname + window.location.search;
+  const POLL_MS       = 2000;   // check every 2 seconds
+  const MAX_WAIT      = 60000;  // give up after 60 seconds
+  const MIN_DISPLAY   = 10000;  // always show for at least 10 seconds
 
   // ── STATE ─────────────────────────────────────────────────────────────────
   let attempts    = 0;
   let maxAttempts = MAX_WAIT / POLL_MS;
   let startTime   = Date.now();
   let phase       = 1;
+  let serverReady = false;  // track if health check passed early
 
   const statusEl   = document.getElementById('status');
   const subEl      = document.getElementById('substatus');
@@ -268,20 +270,28 @@
     setStep(n);
   }
 
-  // Natural progress animation while waiting
+  // Natural progress animation — always completes within MIN_DISPLAY if server is fast
   function tickProgress() {
-    const elapsed  = Date.now() - startTime;
-    const pct      = Math.min(elapsed / MAX_WAIT, 1);
+    const elapsed = Date.now() - startTime;
 
-    // Phase 1: 0–15s → ramp to 35%
-    // Phase 2: 15–30s → ramp to 65%
-    // Phase 3: 30–50s → ramp to 85%
-    if (elapsed < 8000) {
-      progressEl.style.width = (8 + pct * 100 * 0.35) + '%';
-    } else if (elapsed < 20000 && phase < 2) {
-      setPhase(2);
-    } else if (elapsed < 35000 && phase < 3) {
-      setPhase(3);
+    if (!serverReady) {
+      // Cold start mode — slow ramp matching cold start phases
+      if (elapsed < 8000) {
+        progressEl.style.width = (8 + (elapsed / 8000) * 27) + '%';
+      } else if (elapsed < 20000 && phase < 2) {
+        setPhase(2);
+      } else if (elapsed < 35000 && phase < 3) {
+        setPhase(3);
+      }
+    } else {
+      // Server already ready — smoothly ramp remaining progress to 95%
+      // Phase 4 (100%) is set when redirect fires
+      const sinceReady = elapsed - startTime;
+      const warmPct = Math.min((elapsed / MIN_DISPLAY), 1);
+      if (warmPct < 0.3 && phase < 2) setPhase(2);
+      else if (warmPct < 0.65 && phase < 3) setPhase(3);
+      const fill = Math.min(8 + warmPct * 87, 95);
+      progressEl.style.width = fill + '%';
     }
 
     if (elapsed < MAX_WAIT) {
@@ -298,14 +308,20 @@
         signal: AbortSignal.timeout(4000)
       });
       if (res.ok) {
-        // Server is up
-        setPhase(4);
+        // Server is up — but always respect the minimum display time
+        serverReady = true;
+        const elapsed  = Date.now() - startTime;
+        const remaining = Math.max(0, MIN_DISPLAY - elapsed);
+
         setTimeout(() => {
-          flashEl.classList.add('show');
+          setPhase(4);
           setTimeout(() => {
-            window.location.replace(REDIRECT_TO);
-          }, 350);
-        }, 600);
+            flashEl.classList.add('show');
+            setTimeout(() => {
+              window.location.replace(REDIRECT_TO);
+            }, 350);
+          }, 600);
+        }, remaining);
         return;
       }
     } catch (e) {
