@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>UniVerify — Loading</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      background:#0D1B2A;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .wrap{
+      text-align:center;
+      max-width:420px;
+      width:100%;
+    }
+
+    /* Logo */
+    .logo{
+      font-size:36px;
+      font-weight:700;
+      color:#fff;
+      margin-bottom:6px;
+      letter-spacing:-0.5px;
+    }
+    .logo span{color:#C9A84C}
+
+    .tagline{
+      font-size:13px;
+      color:#8899AA;
+      margin-bottom:52px;
+      letter-spacing:0.3px;
+    }
+
+    /* Animated shield / lock mark */
+    .shield-wrap{
+      position:relative;
+      width:88px;
+      height:88px;
+      margin:0 auto 40px;
+    }
+    .shield-ring{
+      position:absolute;
+      inset:0;
+      border-radius:50%;
+      border:2px solid #1A3A5C;
+      border-top-color:#C9A84C;
+      animation:spin 1.4s linear infinite;
+    }
+    .shield-ring.slow{
+      width:70px;height:70px;top:9px;left:9px;
+      border-top-color:transparent;
+      border-right-color:#006D77;
+      animation-duration:2.2s;
+      animation-direction:reverse;
+    }
+    .shield-inner{
+      position:absolute;
+      inset:18px;
+      border-radius:50%;
+      background:#0A1929;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .shield-icon{
+      font-size:22px;
+      animation:pulse 2s ease-in-out infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes pulse{0%,100%{opacity:0.6;transform:scale(0.95)}50%{opacity:1;transform:scale(1.05)}}
+
+    /* Status text */
+    .status{
+      font-size:15px;
+      font-weight:600;
+      color:#fff;
+      margin-bottom:8px;
+      min-height:24px;
+    }
+    .substatus{
+      font-size:12px;
+      color:#8899AA;
+      margin-bottom:36px;
+      min-height:18px;
+    }
+
+    /* Progress bar */
+    .progress-track{
+      background:#1A3A5C;
+      border-radius:8px;
+      height:4px;
+      overflow:hidden;
+      margin-bottom:36px;
+    }
+    .progress-fill{
+      height:100%;
+      background:linear-gradient(90deg,#006D77,#C9A84C);
+      border-radius:8px;
+      width:0%;
+      transition:width 0.4s ease;
+    }
+
+    /* Step dots */
+    .steps{
+      display:flex;
+      justify-content:center;
+      gap:28px;
+      margin-bottom:44px;
+    }
+    .step-item{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      opacity:0.3;
+      transition:opacity 0.5s;
+    }
+    .step-item.active{opacity:1}
+    .step-item.done{opacity:0.65}
+    .step-dot{
+      width:28px;height:28px;
+      border-radius:50%;
+      background:#1A3A5C;
+      border:1.5px solid #1A3A5C;
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;
+      color:#8899AA;
+      transition:all 0.4s;
+    }
+    .step-item.active .step-dot{
+      background:#0A1929;
+      border-color:#C9A84C;
+      color:#C9A84C;
+      box-shadow:0 0 12px rgba(201,168,76,0.3);
+    }
+    .step-item.done .step-dot{
+      background:#006D77;
+      border-color:#006D77;
+      color:#fff;
+    }
+    .step-label{
+      font-size:9.5px;
+      color:#8899AA;
+      text-align:center;
+      max-width:56px;
+      line-height:1.3;
+    }
+    .step-item.active .step-label{color:#C9A84C}
+    .step-item.done .step-label{color:#006D77}
+
+    /* Footer */
+    .footer-note{
+      font-size:11px;
+      color:#445566;
+      line-height:1.6;
+    }
+    .footer-note strong{color:#8899AA}
+
+    /* Redirect overlay */
+    .redirect-flash{
+      position:fixed;inset:0;
+      background:#0D1B2A;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 0.4s;
+      z-index:999;
+    }
+    .redirect-flash.show{opacity:1}
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="logo">Uni<span>Verify</span></div>
+  <div class="tagline">Africa's Trusted Digital Academic Credential Infrastructure</div>
+
+  <div class="shield-wrap">
+    <div class="shield-ring"></div>
+    <div class="shield-ring slow"></div>
+    <div class="shield-inner">
+      <div class="shield-icon">🔐</div>
+    </div>
+  </div>
+
+  <div class="status" id="status">Initialising secure connection</div>
+  <div class="substatus" id="substatus">Please wait a moment...</div>
+
+  <div class="progress-track">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+
+  <div class="steps">
+    <div class="step-item active" id="step-1">
+      <div class="step-dot">1</div>
+      <div class="step-label">Waking server</div>
+    </div>
+    <div class="step-item" id="step-2">
+      <div class="step-dot">2</div>
+      <div class="step-label">Connecting database</div>
+    </div>
+    <div class="step-item" id="step-3">
+      <div class="step-dot">3</div>
+      <div class="step-label">Loading platform</div>
+    </div>
+    <div class="step-item" id="step-4">
+      <div class="step-dot">✓</div>
+      <div class="step-label">Ready</div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    <strong>verify.akeenalee.com</strong><br/>
+    Innovation Lens Resources Ltd &nbsp;·&nbsp; Secured by UniVerify
+  </div>
+</div>
+
+<div class="redirect-flash" id="flash"></div>
+
+<script>
+  // ── CONFIG ────────────────────────────────────────────────────────────────
+  const HEALTH_URL  = 'https://doc-verify-x9uq.onrender.com/health';
+  const REDIRECT_TO = 'https://doc-verify-x9uq.onrender.com' + window.location.pathname + window.location.search;
+  const POLL_MS     = 2000;   // check every 2 seconds
+  const MAX_WAIT    = 60000;  // give up after 60 seconds
+
+  // ── STATE ─────────────────────────────────────────────────────────────────
+  let attempts    = 0;
+  let maxAttempts = MAX_WAIT / POLL_MS;
+  let startTime   = Date.now();
+  let phase       = 1;
+
+  const statusEl   = document.getElementById('status');
+  const subEl      = document.getElementById('substatus');
+  const progressEl = document.getElementById('progress');
+  const flashEl    = document.getElementById('flash');
+
+  const phases = [
+    { status: 'Initialising secure connection',   sub: 'Waking the server — this takes about 15 seconds...',   progress: 8  },
+    { status: 'Server is responding',             sub: 'Establishing database connection...',                   progress: 45 },
+    { status: 'Database connected',               sub: 'Loading the verification platform...',                  progress: 75 },
+    { status: 'Platform ready',                   sub: 'Redirecting you now...',                               progress: 100 },
+  ];
+
+  function setStep(n) {
+    for (let i = 1; i <= 4; i++) {
+      const el = document.getElementById('step-' + i);
+      el.classList.remove('active', 'done');
+      if (i < n) el.classList.add('done');
+      else if (i === n) el.classList.add('active');
+    }
+  }
+
+  function setPhase(n) {
+    if (n === phase) return;
+    phase = n;
+    const p = phases[n - 1];
+    statusEl.textContent   = p.status;
+    subEl.textContent      = p.sub;
+    progressEl.style.width = p.progress + '%';
+    setStep(n);
+  }
+
+  // Natural progress animation while waiting
+  function tickProgress() {
+    const elapsed  = Date.now() - startTime;
+    const pct      = Math.min(elapsed / MAX_WAIT, 1);
+
+    // Phase 1: 0–15s → ramp to 35%
+    // Phase 2: 15–30s → ramp to 65%
+    // Phase 3: 30–50s → ramp to 85%
+    if (elapsed < 8000) {
+      progressEl.style.width = (8 + pct * 100 * 0.35) + '%';
+    } else if (elapsed < 20000 && phase < 2) {
+      setPhase(2);
+    } else if (elapsed < 35000 && phase < 3) {
+      setPhase(3);
+    }
+
+    if (elapsed < MAX_WAIT) {
+      requestAnimationFrame(tickProgress);
+    }
+  }
+
+  // ── POLLING ───────────────────────────────────────────────────────────────
+  async function checkHealth() {
+    attempts++;
+    try {
+      const res = await fetch(HEALTH_URL, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(4000)
+      });
+      if (res.ok) {
+        // Server is up
+        setPhase(4);
+        setTimeout(() => {
+          flashEl.classList.add('show');
+          setTimeout(() => {
+            window.location.replace(REDIRECT_TO);
+          }, 350);
+        }, 600);
+        return;
+      }
+    } catch (e) {
+      // Server not ready yet — keep polling
+    }
+
+    if (attempts >= maxAttempts) {
+      statusEl.textContent = 'Taking longer than expected';
+      subEl.textContent    = 'Still trying... thank you for your patience.';
+      return;
+    }
+
+    setTimeout(checkHealth, POLL_MS);
+  }
+
+  // ── START ──────────────────────────────────────────────────────────────────
+  setStep(1);
+  progressEl.style.width = '8%';
+  tickProgress();
+  setTimeout(checkHealth, 1000); // first check after 1 second
+</script>
+</body>
+</html>
